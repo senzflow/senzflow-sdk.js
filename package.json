@@ -1,0 +1,25 @@
+{
+  "name": "senzflow-sdk.js",
+  "version": "1.0.0",
+  "description": "senzflow sdk for node.js",
+  "main": "index.js",
+  "scripts": {
+    "simulator": "node --harmony --harmony_destructuring examples/simulator.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://senzflow.io/sdk.js"
+  },
+  "keywords": [
+    "senzflow",
+    "iot",
+    "sdk"
+  ],
+  "author": "willis.gong@senzflow.io",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^3.10.1",
+    "mqtt": "^1.6.3",
+    "private-parts": "^0.4.1"
+  }
+}

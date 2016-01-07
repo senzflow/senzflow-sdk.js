@@ -1,0 +1,5 @@
+.idea
+*.log
+*.pem
+node_modules
+tmp
