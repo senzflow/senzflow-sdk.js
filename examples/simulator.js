@@ -23,11 +23,23 @@ function main() {
         keyPath: `${directory}/key.pem`,
         certPath: `${directory}/cert.pem`,
         protocol: 'mqtts',
-        initialLoad: true
+        initialLoad: true,
+        about: {
+            name: "Simulator IOT Device",
+            desc: "Simulated IOT device using the senzflow(©) sdk"
+        },
+        onConfig: (...args) => {
+            console.log("Apply config:", ...args);
+            return "Granted by 'simulator'";
+        },
+        onControl: (...args) => {
+            console.log("Apply control:", ...args);
+            return "Granted by 'simulator'";
+        }
     });
 
     simulator.on("connect", () => console.log(`device connected`));
-    simulator.on("error", (error) => console.error(error));
+    simulator.on("error", (error) => console.error("something goes error", error));
     simulator.on("message", (topic, message) => console.log(`${topic} <== ${message}`));
 
     enable_repl(simulator);
@@ -42,22 +54,44 @@ function enable_repl(simulator) {
         ignoreUndefined: true
     });
 
-    for (let alias of ['publish', 'p']) {
+    for (let alias of ['publish', 'pub', 'p']) {
         replServer.defineCommand(alias, {
             help: 'Publish a message',
             action: supportPublishCommand
         });
     }
 
-    for (let alias of ['subscribe', 's']) {
+    for (let alias of ['subscribe', 'sub', 's']) {
         replServer.defineCommand(alias, {
             help: 'Subscribe a topic',
             action: supportSubscribeCommand
         });
     }
 
+    for (let alias of ['unsubscribe', 'unsub', 'u']) {
+        replServer.defineCommand(alias, {
+            help: 'Unsubscribe a topic',
+            action: supportUnsubscribeCommand
+        });
+    }
+
+    for (let alias of ['report', 'r']) {
+        replServer.defineCommand(alias, {
+            help: 'Report device status',
+            action: supportReportStatusCommand
+        });
+    }
+
+    for (let alias of ['load', 'l']) {
+        replServer.defineCommand(alias, {
+            help: 'Load device config',
+            action: supportLoadConfCommand
+        });
+    }
+
     replServer.on('exit', () => {
         console.log("Bye!");
+        simulator.close();
         process.exit();
     });
 
@@ -71,12 +105,13 @@ function enable_repl(simulator) {
                     } else {
                         console.log(`${topic} ==> ${payload}`);
                     }
+                    this.displayPrompt();
                 });
             } else {
                 console.error(`ERROR incomplete command "${string}"`);
+                this.displayPrompt();
             }
         }
-        this.displayPrompt();
     }
 
     function supportSubscribeCommand(topic) {
@@ -87,8 +122,44 @@ function enable_repl(simulator) {
                 } else {
                     console.log(`OK subscribed to "${topic}"`);
                 }
+                this.displayPrompt();
             });
         }
+    }
+
+    function supportUnsubscribeCommand(topic) {
+        if (topic) {
+            simulator.unsubscribe(topic, (err, r) => {
+                if (err) {
+                    console.error(`Error unsubscribe "${topic}":`, err)
+                } else {
+                    console.log(`OK unsubscribed to "${topic}"`);
+                }
+                this.displayPrompt();
+            });
+        }
+    }
+
+    function supportReportStatusCommand(string) {
+        if (string) {
+            let [, name, value] = /\s*(\S+)\s+(.*)/.exec(string) || [];
+            if (name) {
+                simulator.reportStatus(name, value);
+            } else {
+                console.error(`ERROR incomplete command "${string}"`);
+            }
+        }
+        this.displayPrompt();
+    }
+
+    function supportLoadConfCommand(string) {
+        simulator.loadConf(function(err, res) {
+            if (err) {
+                console.error("Error load config:", err);
+            } else {
+                console.log("Loaded config:", res);
+            }
+        });
         this.displayPrompt();
     }
 }
