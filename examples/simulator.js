@@ -4,26 +4,34 @@ const fs = require("fs");
 const repl = require('repl');
 const Device = require("../index").Device;
 
-function main() {
+function main(argv) {
 
-    let directory = process.cwd();
+    let nopt = require("nopt");
 
-    if (process.argv.length > 2) {
-        directory = process.argv[process.argv.length - 1];
-        if (!fs.existsSync(directory) || !fs.lstatSync(directory).isDirectory()) {
-            throw new Error(`"${directory}" doesnt seems to be a valid directory`);
-        }
-    }
+    let opts = nopt({
+        workdir: [String, null],
+        clientId: [String, null],
+        url: [String],
+        rejectUnauthorized: Boolean
+    }, {
+        w: ["--workdir"],
+        u: ["--url"],
+        i: ["--clientId"],
+        r: ["--rejectUnauthorized"]
+    }, argv);
+
+    let directory = opts.workdir || process.cwd();
 
     console.log(`will run simulator from ${directory}`);
 
-    const simulator = new Device({
-        clientId: "simulator",
+    const simulator = new Device(opts.url, {
+        clientId: opts.clientId || `simulator-${Date.now()}`,
         caPath: `${directory}/ca.pem`,
         keyPath: `${directory}/key.pem`,
         certPath: `${directory}/cert.pem`,
         protocol: 'mqtts',
         initialLoad: true,
+        rejectUnauthorized: !!opts.rejectUnauthorized,
         about: {
             name: "Simulator IOT Device",
             desc: "Simulated IOT device using the senzflow(©) sdk"
@@ -166,7 +174,7 @@ function enable_repl(simulator) {
 
 
 try {
-    main();
+    main(process.argv);
 } catch (e) {
     console.error(e.stack, e);
     process.exit();
