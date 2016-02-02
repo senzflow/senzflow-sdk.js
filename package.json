@@ -4,7 +4,7 @@
   "description": "senzflow sdk for node.js",
   "main": "index.js",
   "scripts": {
-    "simulator": "node --harmony --harmony_destructuring examples/simulator.js"
+    "simulator": "node examples/simulator.js"
   },
   "repository": {
     "type": "git",

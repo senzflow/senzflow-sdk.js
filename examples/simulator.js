@@ -1,14 +1,14 @@
 "use strict";
 
-const fs = require("fs");
-const repl = require('repl');
-const Device = require("../index").Device;
+var fs = require("fs");
+var repl = require('repl');
+var Device = require("../index").Device;
 
 function main(argv) {
 
-    let nopt = require("nopt");
+    var nopt = require("nopt");
 
-    let opts = nopt({
+    var opts = nopt({
         workdir: [String, null],
         clientId: [String, null],
         url: [String],
@@ -20,15 +20,15 @@ function main(argv) {
         r: ["--rejectUnauthorized"]
     }, argv);
 
-    let directory = opts.workdir || process.cwd();
+    var directory = opts.workdir || process.cwd();
 
-    console.log(`will run simulator from ${directory}`);
+    console.log("will run simulator from " + directory);
 
-    const simulator = new Device(opts.url, {
-        clientId: opts.clientId || `simulator-${Date.now()}`,
-        caPath: `${directory}/ca.pem`,
-        keyPath: `${directory}/key.pem`,
-        certPath: `${directory}/cert.pem`,
+    var simulator = new Device(opts.url, {
+        clientId: opts.clientId || "simulator_" + Date.now(),
+        caPath: directory + "/ca.pem",
+        keyPath: directory + "/key.pem",
+        certPath: directory + "/cert.pem",
         protocol: 'mqtts',
         initialLoad: true,
         rejectUnauthorized: !!opts.rejectUnauthorized,
@@ -36,25 +36,25 @@ function main(argv) {
             name: "Simulator IOT Device",
             desc: "Simulated IOT device using the senzflow(©) sdk"
         },
-        onConfig: (...args) => {
-            console.log("Apply config:", ...args);
+        onConfig: function() {
+            console.log("Apply config:", arguments);
             return "Granted by 'simulator'";
         },
-        onControl: (...args) => {
-            console.log("Apply control:", ...args);
+        onControl: function() {
+            console.log("Apply control:", arguments);
             return "Granted by 'simulator'";
         }
     });
 
-    simulator.on("connect", () => console.log(`device connected`));
-    simulator.on("error", (error) => console.error("something goes error", error));
-    simulator.on("message", (topic, message) => console.log(`${topic} <== ${message}`));
+    simulator.on("connect", function() { console.log("device connected") });
+    simulator.on("error", function(error) { console.error("something goes error", error) });
+    simulator.on("message", function(topic, message) { console.log(topic + " <== " + message) });
 
     enable_repl(simulator);
 }
 
 function enable_repl(simulator) {
-    const replServer = repl.start({
+    var replServer = repl.start({
         prompt: 'simulator> ',
         input: process.stdin,
         output: process.stdout,
@@ -62,42 +62,42 @@ function enable_repl(simulator) {
         ignoreUndefined: true
     });
 
-    for (let alias of ['publish', 'pub', 'p']) {
+    ['publish', 'pub', 'p'].map(function(alias) {
         replServer.defineCommand(alias, {
             help: 'Publish a message',
             action: supportPublishCommand
         });
-    }
+    });
 
-    for (let alias of ['subscribe', 'sub', 's']) {
+    ['subscribe', 'sub', 's'].map(function(alias) {
         replServer.defineCommand(alias, {
             help: 'Subscribe a topic',
             action: supportSubscribeCommand
         });
-    }
+    });
 
-    for (let alias of ['unsubscribe', 'unsub', 'u']) {
+    ['unsubscribe', 'unsub', 'u'].map(function(alias) {
         replServer.defineCommand(alias, {
             help: 'Unsubscribe a topic',
             action: supportUnsubscribeCommand
         });
-    }
+    });
 
-    for (let alias of ['report', 'r']) {
+    ['report', 'r'].map(function(alias) {
         replServer.defineCommand(alias, {
             help: 'Report device status',
             action: supportReportStatusCommand
         });
-    }
+    });
 
-    for (let alias of ['load', 'l']) {
+    ['load', 'l'].map(function(alias) {
         replServer.defineCommand(alias, {
             help: 'Load device config',
             action: supportLoadConfCommand
         });
-    }
+    });
 
-    replServer.on('exit', () => {
+    replServer.on('exit', function() {
         console.log("Bye!");
         simulator.close();
         process.exit();
@@ -105,18 +105,18 @@ function enable_repl(simulator) {
 
     function supportPublishCommand(string) {
         if (string) {
-            let [, topic, payload] = /\s*(\S+)\s+(.*)/.exec(string) || [];
+            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], topic = temp[1], payload=temp[2];
             if (topic) {
-                simulator.publish(topic, payload, (error) => {
+                simulator.publish(topic, payload, function(error) {
                     if (error) {
-                        console.error(`ERROR ${topic} ==> ${payload}:`, error);
+                        console.error("ERROR " + topic + " ==> " + payload + ":", error);
                     } else {
-                        console.log(`${topic} ==> ${payload}`);
+                        console.log(topic +" ==> " + payload);
                     }
                     this.displayPrompt();
-                });
+                }.bind(this));
             } else {
-                console.error(`ERROR incomplete command "${string}"`);
+                console.error("ERROR incomplete command " + string);
                 this.displayPrompt();
             }
         }
@@ -124,44 +124,44 @@ function enable_repl(simulator) {
 
     function supportSubscribeCommand(topic) {
         if (topic) {
-            simulator.subscribe(topic, {qos: 2}, (err, r) => {
+            simulator.subscribe(topic, { qos: 2 }, function(err, r) {
                 if (err) {
-                    console.error(`Error subscribe "${topic}":`, err)
+                    console.error("Error subscribe " + topic  + ":", err);
                 } else {
-                    console.log(`OK subscribed to "${topic}"`);
+                    console.log("OK subscribed to " + topic);
                 }
                 this.displayPrompt();
-            });
+            }.bind(this));
         }
     }
 
     function supportUnsubscribeCommand(topic) {
         if (topic) {
-            simulator.unsubscribe(topic, (err, r) => {
+            simulator.unsubscribe(topic, function(err, r) {
                 if (err) {
-                    console.error(`Error unsubscribe "${topic}":`, err)
+                    console.error("Error unsubscribe " + topic + ":", err);
                 } else {
-                    console.log(`OK unsubscribed to "${topic}"`);
+                    console.log("OK unsubscribed to " + topic);
                 }
                 this.displayPrompt();
-            });
+            }.bind(this));
         }
     }
 
     function supportReportStatusCommand(string) {
         if (string) {
-            let [, name, value] = /\s*(\S+)\s+(.*)/.exec(string) || [];
+            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], name = temp[1], valule = temp[2];
             if (name) {
                 simulator.reportStatus(name, value);
             } else {
-                console.error(`ERROR incomplete command "${string}"`);
+                console.error("ERROR incomplete command " + string);
             }
         }
         this.displayPrompt();
     }
 
     function supportLoadConfCommand(string) {
-        simulator.loadConf(function(err, res) {
+        simulator.loadConf(function (err, res) {
             if (err) {
                 console.error("Error load config:", err);
             } else {
@@ -171,7 +171,6 @@ function enable_repl(simulator) {
         this.displayPrompt();
     }
 }
-
 
 try {
     main(process.argv);
