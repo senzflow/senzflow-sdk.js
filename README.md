@@ -4,7 +4,7 @@ senzflow sdk for node.js
 
 ## Install
 
-npm i senzflow-sdk.js --save
+`npm install senzflow-sdk.js --save`
 
 ## How to use
 
