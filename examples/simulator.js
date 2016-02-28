@@ -31,10 +31,11 @@ function main(argv) {
         certPath: directory + "/cert.pem",
         protocol: 'mqtts',
         initialLoad: true,
+        deviceType: "simtype",
         rejectUnauthorized: !!opts.rejectUnauthorized,
         about: {
             name: "Simulator IOT Device",
-            desc: "Simulated IOT device using the senzflow(©) sdk"
+            label: "Simulated IOT device using the senzflow(©) sdk"
         },
         onConfig: function() {
             console.log("Apply config:", arguments);
@@ -48,7 +49,7 @@ function main(argv) {
 
     simulator.on("connect", function() { console.log("device connected") });
     simulator.on("error", function(error) { console.error("something goes error", error) });
-    simulator.on("message", function(topic, message) { console.log(topic + " <== " + message) });
+    simulator.on("event", function(event, message, options) { console.log(event + " <== " + message, options) });
 
     enable_repl(simulator);
 }
@@ -71,14 +72,14 @@ function enable_repl(simulator) {
 
     ['subscribe', 'sub', 's'].map(function(alias) {
         replServer.defineCommand(alias, {
-            help: 'Subscribe a topic',
+            help: 'Subscribe a event',
             action: supportSubscribeCommand
         });
     });
 
     ['unsubscribe', 'unsub', 'u'].map(function(alias) {
         replServer.defineCommand(alias, {
-            help: 'Unsubscribe a topic',
+            help: 'Unsubscribe a event',
             action: supportUnsubscribeCommand
         });
     });
@@ -105,13 +106,13 @@ function enable_repl(simulator) {
 
     function supportPublishCommand(string) {
         if (string) {
-            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], topic = temp[1], payload=temp[2];
-            if (topic) {
-                simulator.publish(topic, payload, function(error) {
+            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], event = temp[1], payload=temp[2];
+            if (event) {
+                simulator.publishEvent(event, payload, function(error) {
                     if (error) {
-                        console.error("ERROR " + topic + " ==> " + payload + ":", error);
+                        console.error("ERROR " + event + " ==> " + payload + ":", error);
                     } else {
-                        console.log(topic +" ==> " + payload);
+                        console.log(event +" ==> " + payload);
                     }
                     this.displayPrompt();
                 }.bind(this));
@@ -122,26 +123,26 @@ function enable_repl(simulator) {
         }
     }
 
-    function supportSubscribeCommand(topic) {
-        if (topic) {
-            simulator.subscribe(topic, { qos: 2 }, function(err, r) {
+    function supportSubscribeCommand(event) {
+        if (event) {
+            simulator.subscribeEvent(event, { qos: 2 }, function(err, r) {
                 if (err) {
-                    console.error("Error subscribe " + topic  + ":", err);
+                    console.error("Error subscribe " + event  + ":", err);
                 } else {
-                    console.log("OK subscribed to " + topic);
+                    console.log("OK subscribed to " + event);
                 }
                 this.displayPrompt();
             }.bind(this));
         }
     }
 
-    function supportUnsubscribeCommand(topic) {
-        if (topic) {
-            simulator.unsubscribe(topic, function(err, r) {
+    function supportUnsubscribeCommand(event) {
+        if (event) {
+            simulator.unsubscribeEvent(event, function(err, r) {
                 if (err) {
-                    console.error("Error unsubscribe " + topic + ":", err);
+                    console.error("Error unsubscribe " + event + ":", err);
                 } else {
-                    console.log("OK unsubscribed to " + topic);
+                    console.log("OK unsubscribed to " + event);
                 }
                 this.displayPrompt();
             }.bind(this));
@@ -150,7 +151,7 @@ function enable_repl(simulator) {
 
     function supportReportStatusCommand(string) {
         if (string) {
-            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], name = temp[1], valule = temp[2];
+            var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], name = temp[1], value = temp[2];
             if (name) {
                 simulator.reportStatus(name, value);
             } else {
