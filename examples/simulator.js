@@ -108,7 +108,7 @@ function enable_repl(simulator) {
         if (string) {
             var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], event = temp[1], payload=temp[2];
             if (event) {
-                simulator.publishEvent(event, payload, function(error) {
+                simulator.publishEvent({eventType: event, payload: payload}, function(error) {
                     if (error) {
                         console.error("ERROR " + event + " ==> " + payload + ":", error);
                     } else {
@@ -125,7 +125,7 @@ function enable_repl(simulator) {
 
     function supportSubscribeCommand(event) {
         if (event) {
-            simulator.subscribeEvent(event, { qos: 2 }, function(err, r) {
+            simulator.subscribeEvent({eventType: event, qos: 2 }, function(err, r) {
                 if (err) {
                     console.error("Error subscribe " + event  + ":", err);
                 } else {
@@ -138,7 +138,7 @@ function enable_repl(simulator) {
 
     function supportUnsubscribeCommand(event) {
         if (event) {
-            simulator.unsubscribeEvent(event, function(err, r) {
+            simulator.unsubscribeEvent({eventType: event}, function(err, r) {
                 if (err) {
                     console.error("Error unsubscribe " + event + ":", err);
                 } else {
@@ -153,7 +153,7 @@ function enable_repl(simulator) {
         if (string) {
             var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], name = temp[1], value = temp[2];
             if (name) {
-                simulator.reportStatus(name, value);
+                simulator.publishStatus(name, value);
             } else {
                 console.error("ERROR incomplete command " + string);
             }
