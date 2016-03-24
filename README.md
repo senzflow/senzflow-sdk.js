@@ -8,4 +8,12 @@ senzflow sdk for node.js
 
 ## How to use
 
-TODO
+var Device = require("senzflow-sdk.js").Device;
+var myDevice = new Device(options)
+
+options
+
+参数名            |类型              |说明
+:----------------| :-----------  	| :-----------
+url |String            |服务器地址 mqtts://senzflow.io:8883
+

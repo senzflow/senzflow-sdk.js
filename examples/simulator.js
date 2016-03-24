@@ -36,21 +36,29 @@ function main(argv) {
         about: {
             name: "Simulator IOT Device",
             label: "Simulated IOT device using the senzflow(©) sdk"
-        },
-        onConfig: function() {
-            console.log("Apply config:", arguments);
-            return "Granted by 'simulator'";
-        },
-        onControl: function() {
-            console.log("Apply control:", arguments);
-            return "Granted by 'simulator'";
         }
     });
 
-    simulator.on("connect", function() { console.log("device connected") });
-    simulator.on("error", function(error) { console.error("something goes error", error) });
-    simulator.on("event", function(event, message, options) { console.log(event + " <== " + message, options) });
+    function onConfig(config) {
+        console.log("Apply config:", config.config);
+        config.done(null, "Granted by 'simulator'");
+    }
 
+    function onControl(control) {
+        console.log("Apply control:", control.control);
+        control.done(null, "Granted by 'simulator'");
+    }
+
+    simulator
+        .on("connect", function() { console.log("device connected") })
+        .on("error",   function(error) { console.error("something goes error", error) })
+        .on("event",   function(event) { console.log(event.eventType, event.deviceType, "<==", String(event.payload)) })
+        .on("close",   function() {console.log( 'close' ) })
+        .on('reconnect', function() { console.log( 'reconnect' ) })
+        .on('offline', function() { console.log( 'offline' ) })
+        .on('config', onConfig)
+        .on('control', onControl)
+        ;
     enable_repl(simulator);
 }
 
@@ -95,6 +103,20 @@ function enable_repl(simulator) {
         replServer.defineCommand(alias, {
             help: 'Load device config',
             action: supportLoadConfCommand
+        });
+    });
+
+    ['senzon'].map(function(alias) {
+        replServer.defineCommand(alias, {
+            help: 'Make sensor online',
+            action: supportSensorOnline
+        });
+    });
+
+    ['senzoff'].map(function(alias) {
+        replServer.defineCommand(alias, {
+            help: 'Make sensor offline',
+            action: supportSensorOffline
         });
     });
 
@@ -157,6 +179,20 @@ function enable_repl(simulator) {
             } else {
                 console.error("ERROR incomplete command " + string);
             }
+        }
+        this.displayPrompt();
+    }
+
+    function supportSensorOnline(string) {
+        if (string) {
+            simulator.sensorOnline(string.split(/\s+/));
+        }
+        this.displayPrompt();
+    }
+
+    function supportSensorOffline(string) {
+        if (string) {
+            simulator.sensorOffline(string.split(/\s+/));
         }
         this.displayPrompt();
     }
