@@ -25,17 +25,14 @@ function main(argv) {
     console.log("will run simulator from " + directory);
 
     var simulator = new Device(opts.url, {
-        clientId: opts.clientId || "simulator_" + Date.now(),
+        clientId: opts.clientId || "simulator",
         caPath: directory + "/ca.pem",
         keyPath: directory + "/key.pem",
         certPath: directory + "/cert.pem",
-        protocol: 'mqtts',
-        initialLoad: true,
-        deviceType: "simtype",
-        rejectUnauthorized: !!opts.rejectUnauthorized,
-        about: {
+        meta: {
+            model: "simulator",
             name: "Simulator IOT Device",
-            label: "Simulated IOT device using the senzflow(©) sdk"
+            desc: "Simulated IOT device using the senzflow(©) sdk"
         }
     });
 
@@ -52,7 +49,7 @@ function main(argv) {
     simulator
         .on("connect", function() { console.log("device connected") })
         .on("error",   function(error) { console.error("something goes error", error) })
-        .on("event",   function(event) { console.log(event.eventType, event.deviceType, "<==", String(event.payload)) })
+        .on("event",   function(event) { console.log(event.name, "<==", String(event.content)) })
         .on("close",   function() {console.log( 'close' ) })
         .on('reconnect', function() { console.log( 'reconnect' ) })
         .on('offline', function() { console.log( 'offline' ) })
@@ -108,15 +105,15 @@ function enable_repl(simulator) {
 
     ['senzon'].map(function(alias) {
         replServer.defineCommand(alias, {
-            help: 'Make sensor online',
-            action: supportSensorOnline
+            help: 'Make node online',
+            action: supportNodeOnline
         });
     });
 
     ['senzoff'].map(function(alias) {
         replServer.defineCommand(alias, {
-            help: 'Make sensor offline',
-            action: supportSensorOffline
+            help: 'Make node offline',
+            action: supportNodeOffline
         });
     });
 
@@ -130,7 +127,7 @@ function enable_repl(simulator) {
         if (string) {
             var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], event = temp[1], payload=temp[2];
             if (event) {
-                simulator.publishEvent({eventType: event, payload: payload}, function(error) {
+                simulator.publishEvent({name: event, content: payload}, function(error) {
                     if (error) {
                         console.error("ERROR " + event + " ==> " + payload + ":", error);
                     } else {
@@ -147,7 +144,7 @@ function enable_repl(simulator) {
 
     function supportSubscribeCommand(event) {
         if (event) {
-            simulator.subscribeEvent({eventType: event, qos: 2 }, function(err, r) {
+            simulator.subscribeEvent({name: event, qos: 2 }, function(err, r) {
                 if (err) {
                     console.error("Error subscribe " + event  + ":", err);
                 } else {
@@ -160,7 +157,7 @@ function enable_repl(simulator) {
 
     function supportUnsubscribeCommand(event) {
         if (event) {
-            simulator.unsubscribeEvent({eventType: event}, function(err, r) {
+            simulator.unsubscribeEvent({name: event}, function(err, r) {
                 if (err) {
                     console.error("Error unsubscribe " + event + ":", err);
                 } else {
@@ -183,16 +180,16 @@ function enable_repl(simulator) {
         this.displayPrompt();
     }
 
-    function supportSensorOnline(string) {
+    function supportNodeOnline(string) {
         if (string) {
-            simulator.sensorOnline(string.split(/\s+/));
+            simulator.nodeOnline(string.split(/\s+/));
         }
         this.displayPrompt();
     }
 
-    function supportSensorOffline(string) {
+    function supportNodeOffline(string) {
         if (string) {
-            simulator.sensorOffline(string.split(/\s+/));
+            simulator.nodeOffline(string.split(/\s+/));
         }
         this.displayPrompt();
     }
