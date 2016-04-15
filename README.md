@@ -30,7 +30,13 @@ var options = {
     }
 }
 ```
-    
+
+上述选项中, meta为设备描述信息, 在_senzflow.io_设备管理控制台可见:
+
+* `model`为设备型号
+* `name`为设备名称
+* `desc`为设备描述信息
+
 ### 创建设备
 
 ```
@@ -54,6 +60,7 @@ var myDevice = new Device(options)
 ```
 
 上述API将生成节点*node1*, 在senzflow.io控制台可以看到节点在线.
+
 相应地, 设备可以通过`nodeOffline`来使节点离线.
 
 ```
@@ -74,10 +81,11 @@ var myEnvMeasurement = {
     humidity: 70
 }
 ```
+上面的数据包含*temperature*和*humidity*两个`数据点`.
 
 **发布到`数据流`**
 
-设备将采集的数据（或者称为一个`event`）被发布到一个`数据流`. 例如: “env-measurements”:
+设备将采集的数据（或者称为一个`event`）被发布到一个`数据流`. 数据流名称（例如`env-measurements`)代表了数据类型:
 
 ```
 myDevice.publishEvent({
@@ -85,6 +93,9 @@ myDevice.publishEvent({
     content: myEnvMeasurement
 })
 ```
+
+> 注: 在senzflow的iot模型中, 存在`开发者`（设备厂商）和`用户`（设备使用者）两个角色. 默认数据流会归属为`用户`（仅`用户`可访问）. 
+当设备应用场景中没有预期的`用户`, 或者数据属于其他需要归属到厂商的数据类型时, 开发者可以通过在数据流名称前附加一个`'.'`来表示数据流归属为`开发者`. 
 
 **代表节点发布数据**
 
@@ -133,3 +144,21 @@ myDevice.publishEvent({
     }
 })
 ```
+
+# 注意事项
+
+_命名约定_
+
+* 所有的*identity*命名（含设备/节点ID, 数据点名称, 数据流名称）仅可以使用字母a-z, A-Z, 0-9, 以及“_”和“-”
+* 设备/节点ID不超过32字符
+* 设备/节点型号（`model`）不超过16字符
+* 设备/节点名称（`name`）不超过16字符
+* 设备/节点描述（`desc`）不超过128字符
+* 数据流名称不超过16字符
+* 数据点名称不超过16字符
+
+# 获得帮助
+
+* 进一步了解 [senzflow docs](http://www.senzflow.io/)
+* 欢迎 [贡献代码](https://github.com/senzflow/senzflow-sdk.js/pulls)
+* 需要业务上的帮助, 请联系 [客服](mailto:cs@aisenz.com)
