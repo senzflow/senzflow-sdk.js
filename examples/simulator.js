@@ -44,7 +44,7 @@ function main(argv) {
     simulator
         .on("connect", function() { console.log("device connected") })
         .on("error",   function(error) { console.error("something goes error", error) })
-        .on("event",   function(event) { console.log(event.name, "<==", String(event.content)) })
+        .on("event",   function(event) { console.log(event.name, "<==", String(event.payload)) })
         .on("close",   function() {console.log( 'close' ) })
         .on('reconnect', function() { console.log( 'reconnect' ) })
         .on('offline', function() { console.log( 'offline' ) })
@@ -122,7 +122,7 @@ function enable_repl(simulator) {
         if (string) {
             var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], event = temp[1], payload=temp[2];
             if (event) {
-                simulator.publishEvent({name: event, content: payload}, function(error) {
+                simulator.publishEvent({name: event, payload: payload}, function(error) {
                     if (error) {
                         console.error("ERROR " + event + " ==> " + payload + ":", error);
                     } else {
