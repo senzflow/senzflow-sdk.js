@@ -11,27 +11,22 @@ function main(argv) {
     var opts = nopt({
         workdir: [String, null],
         clientId: [String, null],
-        url: [String],
-        rejectUnauthorized: Boolean
     }, {
         w: ["--workdir"],
-        u: ["--url"],
-        i: ["--clientId"],
-        r: ["--rejectUnauthorized"]
+        i: ["--clientId"]
     }, argv);
 
     var directory = opts.workdir || process.cwd();
 
     console.log("will run simulator from " + directory);
 
-    var simulator = new Device(opts.url, {
+    var simulator = new Device({
         clientId: opts.clientId || "simulator",
         caPath: directory + "/ca.pem",
         keyPath: directory + "/key.pem",
         certPath: directory + "/cert.pem",
         meta: {
             model: "simulator",
-            name: "Simulator IOT Device",
             desc: "Simulated IOT device using the senzflow(©) sdk"
         }
     });
@@ -182,14 +177,14 @@ function enable_repl(simulator) {
 
     function supportNodeOnline(string) {
         if (string) {
-            simulator.nodeOnline(string.split(/\s+/));
+            simulator.nodeOnline(string);
         }
         this.displayPrompt();
     }
 
     function supportNodeOffline(string) {
         if (string) {
-            simulator.nodeOffline(string.split(/\s+/));
+            simulator.nodeOffline(string);
         }
         this.displayPrompt();
     }
