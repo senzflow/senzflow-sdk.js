@@ -11,46 +11,46 @@ function main(argv) {
     var opts = nopt({
         workdir: [String, null],
         clientId: [String, null],
-        url: [String],
-        rejectUnauthorized: Boolean
     }, {
         w: ["--workdir"],
-        u: ["--url"],
-        i: ["--clientId"],
-        r: ["--rejectUnauthorized"]
+        i: ["--clientId"]
     }, argv);
 
     var directory = opts.workdir || process.cwd();
 
     console.log("will run simulator from " + directory);
 
-    var simulator = new Device(opts.url, {
-        clientId: opts.clientId || "simulator_" + Date.now(),
+    var simulator = new Device({
+        clientId: opts.clientId || "simulator",
         caPath: directory + "/ca.pem",
         keyPath: directory + "/key.pem",
         certPath: directory + "/cert.pem",
-        protocol: 'mqtts',
-        initialLoad: true,
-        deviceType: "simtype",
-        rejectUnauthorized: !!opts.rejectUnauthorized,
-        about: {
-            name: "Simulator IOT Device",
-            label: "Simulated IOT device using the senzflow(©) sdk"
-        },
-        onConfig: function() {
-            console.log("Apply config:", arguments);
-            return "Granted by 'simulator'";
-        },
-        onControl: function() {
-            console.log("Apply control:", arguments);
-            return "Granted by 'simulator'";
+        meta: {
+            model: "simulator",
+            desc: "Simulated IOT device using the senzflow(©) sdk"
         }
     });
 
-    simulator.on("connect", function() { console.log("device connected") });
-    simulator.on("error", function(error) { console.error("something goes error", error) });
-    simulator.on("event", function(event, message, options) { console.log(event + " <== " + message, options) });
+    function onConfig(config) {
+        console.log("Apply config:", config.config);
+        config.done(null, "Granted by 'simulator'");
+    }
 
+    function onControl(control) {
+        console.log("Apply control:", control.control);
+        control.done(null, "Granted by 'simulator'");
+    }
+
+    simulator
+        .on("connect", function() { console.log("device connected") })
+        .on("error",   function(error) { console.error("something goes error", error) })
+        .on("event",   function(event) { console.log(event.name, "<==", String(event.payload)) })
+        .on("close",   function() {console.log( 'close' ) })
+        .on('reconnect', function() { console.log( 'reconnect' ) })
+        .on('offline', function() { console.log( 'offline' ) })
+        .on('config', onConfig)
+        .on('control', onControl)
+        ;
     enable_repl(simulator);
 }
 
@@ -98,6 +98,20 @@ function enable_repl(simulator) {
         });
     });
 
+    ['senzon'].map(function(alias) {
+        replServer.defineCommand(alias, {
+            help: 'Make node online',
+            action: supportNodeOnline
+        });
+    });
+
+    ['senzoff'].map(function(alias) {
+        replServer.defineCommand(alias, {
+            help: 'Make node offline',
+            action: supportNodeOffline
+        });
+    });
+
     replServer.on('exit', function() {
         console.log("Bye!");
         simulator.close();
@@ -108,7 +122,7 @@ function enable_repl(simulator) {
         if (string) {
             var temp = /\s*(\S+)\s+(.*)/.exec(string) || [], event = temp[1], payload=temp[2];
             if (event) {
-                simulator.publishEvent({eventType: event, payload: payload}, function(error) {
+                simulator.publishEvent({name: event, payload: payload}, function(error) {
                     if (error) {
                         console.error("ERROR " + event + " ==> " + payload + ":", error);
                     } else {
@@ -125,7 +139,7 @@ function enable_repl(simulator) {
 
     function supportSubscribeCommand(event) {
         if (event) {
-            simulator.subscribeEvent({eventType: event, qos: 2 }, function(err, r) {
+            simulator.subscribeEvent({name: event, qos: 2 }, function(err, r) {
                 if (err) {
                     console.error("Error subscribe " + event  + ":", err);
                 } else {
@@ -138,7 +152,7 @@ function enable_repl(simulator) {
 
     function supportUnsubscribeCommand(event) {
         if (event) {
-            simulator.unsubscribeEvent({eventType: event}, function(err, r) {
+            simulator.unsubscribeEvent({name: event}, function(err, r) {
                 if (err) {
                     console.error("Error unsubscribe " + event + ":", err);
                 } else {
@@ -157,6 +171,20 @@ function enable_repl(simulator) {
             } else {
                 console.error("ERROR incomplete command " + string);
             }
+        }
+        this.displayPrompt();
+    }
+
+    function supportNodeOnline(string) {
+        if (string) {
+            simulator.nodeOnline(string);
+        }
+        this.displayPrompt();
+    }
+
+    function supportNodeOffline(string) {
+        if (string) {
+            simulator.nodeOffline(string);
         }
         this.displayPrompt();
     }
