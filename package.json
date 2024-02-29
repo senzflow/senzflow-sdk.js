@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://senzflow.io/sdk.js"
+    "url": "https://github.com/senzflow/senzflow-sdk.js"
   },
   "keywords": [
     "senzflow",
