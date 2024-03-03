@@ -11,7 +11,6 @@ senzflow-sdk.js是 `senzflow.io` 提供的`node.js`平台网关设备开发SDK.
 
 目前这个SDK仅仅适用于老版本网关
 
-
 ## 前提条件
 
 __使用该SDK需要先__
