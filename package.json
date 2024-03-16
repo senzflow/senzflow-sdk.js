@@ -6,12 +6,9 @@
   "scripts": {
     "simulator": "node examples/simulator.js"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/senzflow/senzflow-sdk.js.git"
+    "url": "git+https://github.com/senzflow/senzflow-sdk.js.git"
   },
   "keywords": [
     "senzflow",
